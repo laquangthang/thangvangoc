@@ -12,7 +12,9 @@ import {
   Camera,
   Trash2,
   Edit3,
+  Loader2,
 } from 'lucide-react';
+import { uploadImage } from '../utils/cloudinary';
 
 interface GiftsSectionProps {
   gifts: Gift[];
@@ -45,8 +47,24 @@ export const GiftsSection: React.FC<GiftsSectionProps> = ({
   const [occasion, setOccasion] = useState('Anniversary');
   const [description, setDescription] = useState('');
   const [story, setStory] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const occasions = ['Anniversary', 'Sinh nhật', 'Valentine', 'Giáng sinh', 'Không nhân dịp gì'];
+
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        setIsUploading(true);
+        const url = await uploadImage(file);
+        setPhotosInput(url);
+      } catch (err) {
+        console.error('Failed to upload gift image', err);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
 
   const filteredGifts = gifts
     .filter((g) => {
@@ -68,7 +86,7 @@ export const GiftsSection: React.FC<GiftsSectionProps> = ({
   const openAddModal = () => {
     setEditingGift(null);
     setName('');
-    setPhotosInput('https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800');
+    setPhotosInput('');
     setGiver(profile.partner1.name);
     setReceiver(profile.partner2.name);
     setDate(new Date().toISOString().split('T')[0]);
@@ -415,15 +433,47 @@ export const GiftsSection: React.FC<GiftsSectionProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-1">
-                  Link ảnh món quà
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                    Ảnh món quà
+                  </label>
+                  <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-semibold cursor-pointer shadow-sm hover:opacity-90 active:scale-95 transition-all ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    <span>{isUploading ? 'Đang tải ảnh...' : 'Tải ảnh từ điện thoại'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploading}
+                      onChange={handleImageFile}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {photosInput && (
+                  <div className="relative mb-2 w-full h-40 rounded-xl overflow-hidden border border-pink-200 dark:border-zinc-700 bg-pink-50/50 dark:bg-zinc-800/60 group">
+                    <img
+                      src={photosInput.split('\n')[0]}
+                      alt="Ảnh món quà"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPhotosInput('')}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors shadow-sm"
+                      title="Xóa ảnh này"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 <input
                   type="text"
                   value={photosInput}
                   onChange={(e) => setPhotosInput(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 rounded-xl bg-pink-50/50 dark:bg-zinc-800/60 border border-pink-200 dark:border-zinc-700 text-xs"
+                  placeholder="Hoặc dán link ảnh https://... (tùy chọn)"
+                  className="w-full px-3 py-2 rounded-xl bg-pink-50/50 dark:bg-zinc-800/60 border border-pink-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-300"
                 />
               </div>
 
