@@ -10,17 +10,12 @@ import {
   RotateCcw,
   Heart,
   Save,
-  Cloud,
-  CloudCheck,
-  RefreshCw,
 } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   fullData: LoveStoryData;
-  syncStatus?: 'connecting' | 'synced' | 'saving' | 'error';
-  onForceSyncToCloud?: () => Promise<void>;
   onUpdateSettings: (newProfile: CoupleProfile, newPasscode: string, newSecretMessage: string) => void;
   onRestoreData: (data: LoveStoryData) => void;
   onResetData: () => void;
@@ -30,8 +25,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   fullData,
-  syncStatus = 'synced',
-  onForceSyncToCloud,
   onUpdateSettings,
   onRestoreData,
   onResetData,
@@ -42,7 +35,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [couplePhoto, setCouplePhoto] = useState(fullData.profile.couplePhoto);
   const [passcode, setPasscode] = useState(fullData.passcode || '');
   const [secretMessage, setSecretMessage] = useState(fullData.secretMessage);
-  const [isManualSyncing, setIsManualSyncing] = useState(false);
 
   if (!isOpen) return null;
 
@@ -221,65 +213,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
         </form>
-
-        {/* Cloud Real-Time Sync Section */}
-        <div className="mt-6 pt-5 border-t border-pink-100 dark:border-zinc-800 text-xs">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5 font-bold text-zinc-800 dark:text-zinc-200">
-              <Cloud className="w-4 h-4 text-rose-500" />
-              <span>Đồng bộ 2 người trên Đám mây (Firebase)</span>
-            </div>
-            <div
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                syncStatus === 'synced'
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                  : syncStatus === 'saving' || syncStatus === 'connecting'
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-                  : 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300'
-              }`}
-            >
-              {syncStatus === 'synced' ? (
-                <>
-                  <CloudCheck className="w-3 h-3" />
-                  <span>Thời gian thực</span>
-                </>
-              ) : syncStatus === 'saving' || syncStatus === 'connecting' ? (
-                <>
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>{syncStatus === 'saving' ? 'Đang lưu...' : 'Đang kết nối...'}</span>
-                </>
-              ) : (
-                <span>Lỗi kết nối</span>
-              )}
-            </div>
-          </div>
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3">
-            Mọi bài hát, món quà, địa điểm, thư tình hai bạn thêm hoặc chỉnh sửa sẽ tự động cập nhật ngay tức thì sang máy của đối phương.
-          </p>
-
-          {onForceSyncToCloud && (
-            <button
-              type="button"
-              disabled={isManualSyncing}
-              onClick={async () => {
-                try {
-                  setIsManualSyncing(true);
-                  await onForceSyncToCloud();
-                  soundFx.playCelebration();
-                  alert('Đã đẩy toàn bộ dữ liệu hiện tại lên Cloud Firebase thành công! 💕');
-                } catch {
-                  alert('Có lỗi khi đẩy dữ liệu lên Cloud!');
-                } finally {
-                  setIsManualSyncing(false);
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold transition-all shadow-xs disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isManualSyncing ? 'animate-spin' : ''}`} />
-              <span>{isManualSyncing ? 'Đang đồng bộ dữ liệu...' : 'Đồng bộ dữ liệu máy này lên Cloud ngay'}</span>
-            </button>
-          )}
-        </div>
 
         {/* Data Backup & Restore */}
         <div className="mt-6 pt-5 border-t border-pink-100 dark:border-zinc-800 text-xs">

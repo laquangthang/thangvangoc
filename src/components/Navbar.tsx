@@ -20,9 +20,6 @@ import {
   X,
   Volume2,
   VolumeX,
-  Cloud,
-  CloudCheck,
-  RefreshCw,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -32,7 +29,6 @@ interface NavbarProps {
   onToggleDarkMode: () => void;
   isEditMode: boolean;
   onToggleEditMode: () => void;
-  syncStatus?: 'connecting' | 'synced' | 'saving' | 'error';
   onOpenSurprise: () => void;
   onOpenProfiles: () => void;
   onOpenSettings: () => void;
@@ -46,7 +42,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleDarkMode,
   isEditMode,
   onToggleEditMode,
-  syncStatus = 'synced',
   onOpenSurprise,
   onOpenProfiles,
   onOpenSettings,
@@ -125,43 +120,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Action buttons on the right */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {/* Cloud Sync Status Indicator */}
-            <div
-              className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                syncStatus === 'synced'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                  : syncStatus === 'saving' || syncStatus === 'connecting'
-                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/60'
-                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
-              }`}
-              title={
-                syncStatus === 'synced'
-                  ? 'Đã đồng bộ thời gian thực trên Đám mây (Firebase)'
-                  : syncStatus === 'saving'
-                  ? 'Đang lưu lên Đám mây...'
-                  : syncStatus === 'connecting'
-                  ? 'Đang kết nối Đám mây...'
-                  : 'Lỗi đồng bộ Đám mây'
-              }
-            >
-              {syncStatus === 'synced' ? (
-                <>
-                  <CloudCheck className="w-3.5 h-3.5" />
-                  <span>Đồng bộ</span>
-                </>
-              ) : syncStatus === 'saving' || syncStatus === 'connecting' ? (
-                <>
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>{syncStatus === 'saving' ? 'Đang lưu...' : 'Kết nối...'}</span>
-                </>
-              ) : (
-                <>
-                  <Cloud className="w-3.5 h-3.5" />
-                  <span>Ngoại tuyến</span>
-                </>
-              )}
-            </div>
-
             {/* Surprise Me button - compact on small screen, full on larger */}
             <button
               onClick={onOpenSurprise}
