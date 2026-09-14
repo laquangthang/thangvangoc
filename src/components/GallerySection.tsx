@@ -17,7 +17,9 @@ import {
   Edit3,
   Camera,
   BookOpen,
+  Loader2,
 } from 'lucide-react';
+import { uploadImage } from '../utils/cloudinary';
 
 interface GallerySectionProps {
   memories: Memory[];
@@ -154,18 +156,21 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
     setIsAddModalOpen(false);
   };
 
-  const handleMultipleImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleMultipleImageFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach((file: File) => {
-        const reader = new FileReader();
-        reader.onload = (uploadEvt) => {
-          if (uploadEvt.target?.result) {
-            setPhotosInput((prev) => (prev ? `${prev}\n${uploadEvt.target?.result}` : String(uploadEvt.target?.result)));
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+    if (files && files.length > 0) {
+      try {
+        setIsUploading(true);
+        const uploadPromises = Array.from(files).map((file: File) => uploadImage(file));
+        const urls = await Promise.all(uploadPromises);
+        setPhotosInput((prev) => (prev ? `${prev}\n${urls.join('\n')}` : urls.join('\n')));
+      } catch (err) {
+        console.error('Failed to upload some images', err);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -530,13 +535,14 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
                   <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
                     Danh sách ảnh (Link hoặc Tải từ máy)
                   </label>
-                  <label className="flex items-center gap-1 text-xs text-rose-500 font-semibold cursor-pointer hover:underline">
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>Chọn ảnh máy tính</span>
+                  <label className={`flex items-center gap-1 text-xs text-rose-500 font-semibold cursor-pointer hover:underline ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    <span>{isUploading ? 'Đang tải lên...' : 'Chọn ảnh máy tính'}</span>
                     <input
                       type="file"
                       multiple
                       accept="image/*"
+                      disabled={isUploading}
                       onChange={handleMultipleImageFiles}
                       className="hidden"
                     />

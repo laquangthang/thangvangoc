@@ -13,7 +13,9 @@ import {
   Sparkles,
   Camera,
   Smile,
+  Loader2,
 } from 'lucide-react';
+import { uploadImage } from '../utils/cloudinary';
 
 interface TimelineSectionProps {
   events: TimelineEvent[];
@@ -115,14 +117,20 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
     });
   };
 
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        setImage(uploadEvent.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        setIsUploading(true);
+        const url = await uploadImage(file);
+        setImage(url);
+      } catch (err) {
+        console.error('Failed to process image', err);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -403,10 +411,10 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                     onChange={(e) => setImage(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-xl bg-pink-50/50 dark:bg-zinc-800/60 border border-pink-200 dark:border-zinc-700 text-xs"
                   />
-                  <label className="flex items-center gap-1 px-3 py-2 rounded-xl bg-pink-100 dark:bg-zinc-700 text-pink-700 dark:text-pink-300 text-xs font-semibold cursor-pointer hover:bg-pink-200">
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>Tải ảnh</span>
-                    <input type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
+                  <label className={`flex items-center gap-1 px-3 py-2 rounded-xl bg-pink-100 dark:bg-zinc-700 text-pink-700 dark:text-pink-300 text-xs font-semibold cursor-pointer hover:bg-pink-200 ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    <span>{isUploading ? 'Đang tải...' : 'Tải ảnh'}</span>
+                    <input type="file" accept="image/*" disabled={isUploading} onChange={handleImageFile} className="hidden" />
                   </label>
                 </div>
                 {image && (
