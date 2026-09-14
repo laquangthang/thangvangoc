@@ -15,6 +15,11 @@ import {
 } from './types';
 import { initialLoveStoryData } from './data/initialData';
 import { soundFx } from './utils/soundEffects';
+import {
+  subscribeLoveStory,
+  saveLoveStoryToFirestore,
+  SyncStatus,
+} from './utils/firebaseSync';
 
 // Components
 import { Navbar } from './components/Navbar';
@@ -55,14 +60,60 @@ export default function App() {
     return initialLoveStoryData;
   });
 
-  // Save changes to localStorage
+  // Firebase Firestore real-time sync status
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('connecting');
+  const isRemoteUpdateRef = React.useRef(false);
+
+  // Subscribe to Cloud Firestore real-time updates (sync across devices)
+  useEffect(() => {
+    const unsubscribe = subscribeLoveStory(
+      (remoteData) => {
+        isRemoteUpdateRef.current = true;
+        setData(remoteData);
+      },
+      (status) => {
+        setSyncStatus(status);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Save changes to localStorage and Cloud Firestore
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
+
+    // If change originated from remote Firestore, do not re-push
+    if (isRemoteUpdateRef.current) {
+      isRemoteUpdateRef.current = false;
+      return;
+    }
+
+    // Debounced save to Firestore
+    const timer = setTimeout(async () => {
+      try {
+        setSyncStatus('saving');
+        await saveLoveStoryToFirestore(data);
+        setSyncStatus('synced');
+      } catch (err) {
+        console.error('Failed to push update to Firestore', err);
+        setSyncStatus('error');
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
   }, [data]);
+
+  // Manual trigger to force upload local state to Cloud
+  const handleForceSyncToCloud = async () => {
+    setSyncStatus('saving');
+    await saveLoveStoryToFirestore(data);
+    setSyncStatus('synced');
+  };
 
   // Section navigation state
   const [currentSection, setCurrentSection] = useState<string>('home');
@@ -416,6 +467,7 @@ export default function App() {
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         isEditMode={isEditMode}
         onToggleEditMode={() => setIsEditMode(!isEditMode)}
+        syncStatus={syncStatus}
         onOpenSurprise={handleOpenSurprise}
         onOpenProfiles={() => setIsProfilesOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -562,6 +614,8 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         fullData={data}
+        syncStatus={syncStatus}
+        onForceSyncToCloud={handleForceSyncToCloud}
         onUpdateSettings={handleUpdateSettings}
         onRestoreData={handleRestoreData}
         onResetData={handleResetData}
