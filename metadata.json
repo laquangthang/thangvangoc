@@ -1,0 +1,6 @@
+{
+  "name": "Our Little Love Story",
+  "description": "A digital love diary, couple scrapbook, private memory book, photo album, and romantic space for two.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
