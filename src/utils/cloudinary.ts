@@ -7,8 +7,8 @@
  * Otherwise, falls back to standard Data URL (base64).
  */
 export async function uploadImage(file: File): Promise<string> {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'abl79ylj';
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ThangvaNgoc';
 
   if (cloudName && uploadPreset) {
     try {
