@@ -339,6 +339,13 @@ export default function App() {
     }));
   };
 
+  const handleUpdateSong = (song: Song) => {
+    setData((prev) => ({
+      ...prev,
+      songs: prev.songs.map((s) => (s.id === song.id ? song : s)),
+    }));
+  };
+
   const handleDeleteSong = (id: string) => {
     setData((prev) => ({
       ...prev,
@@ -522,6 +529,7 @@ export default function App() {
           <SoundtrackSection
             songs={data.songs}
             onAddSong={handleAddSong}
+            onUpdateSong={handleUpdateSong}
             onDeleteSong={handleDeleteSong}
             isEditMode={isEditMode}
           />

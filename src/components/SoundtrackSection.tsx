@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Song } from '../types';
 import { soundFx } from '../utils/soundEffects';
 import { Sticker } from './Sticker';
+import { uploadImage } from '../utils/cloudinary';
 import {
   Music,
   Heart,
@@ -13,11 +14,15 @@ import {
   X,
   Trash2,
   Volume2,
+  Camera,
+  Loader2,
+  Edit3,
 } from 'lucide-react';
 
 interface SoundtrackSectionProps {
   songs: Song[];
   onAddSong: (song: Omit<Song, 'id'>) => void;
+  onUpdateSong?: (song: Song) => void;
   onDeleteSong: (id: string) => void;
   isEditMode: boolean;
 }
@@ -25,16 +30,19 @@ interface SoundtrackSectionProps {
 export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
   songs,
   onAddSong,
+  onUpdateSong,
   onDeleteSong,
   isEditMode,
 }) => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(soundFx.getIsBgmPlaying());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingSong, setEditingSong] = useState<Song | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Form states
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
-  const [cover, setCover] = useState('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800');
+  const [cover, setCover] = useState('');
   const [url, setUrl] = useState('https://open.spotify.com');
   const [note, setNote] = useState('');
   const [isOurSong, setIsOurSong] = useState(false);
@@ -46,21 +54,73 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
     setIsPlayingAudio(nextState);
   };
 
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        setIsUploading(true);
+        const uploadedUrl = await uploadImage(file);
+        setCover(uploadedUrl);
+      } catch (err) {
+        console.error('Failed to upload song cover', err);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingSong(null);
+    setTitle('');
+    setArtist('');
+    setCover('');
+    setUrl('https://open.spotify.com');
+    setNote('');
+    setIsOurSong(false);
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (song: Song) => {
+    setEditingSong(song);
+    setTitle(song.title);
+    setArtist(song.artist);
+    setCover(song.cover || '');
+    setUrl(song.url || '');
+    setNote(song.note || '');
+    setIsOurSong(!!song.isOurSong);
+    setIsAddModalOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !artist.trim()) return;
 
-    onAddSong({
-      title,
-      artist,
-      cover,
-      url,
-      note,
-      isOurSong,
-    });
+    const finalCover = cover.trim() || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800';
+
+    if (editingSong && onUpdateSong) {
+      onUpdateSong({
+        ...editingSong,
+        title,
+        artist,
+        cover: finalCover,
+        url,
+        note,
+        isOurSong,
+      });
+    } else {
+      onAddSong({
+        title,
+        artist,
+        cover: finalCover,
+        url,
+        note,
+        isOurSong,
+      });
+    }
 
     soundFx.playCelebration();
     setIsAddModalOpen(false);
+    setEditingSong(null);
   };
 
   return (
@@ -93,16 +153,8 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              setTitle('');
-              setArtist('');
-              setCover('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800');
-              setUrl('https://open.spotify.com');
-              setNote('');
-              setIsOurSong(false);
-              setIsAddModalOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-rose-500 text-white text-xs font-semibold shadow-sm cursor-pointer"
+            onClick={openAddModal}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-rose-500 text-white text-xs font-semibold shadow-sm cursor-pointer hover:bg-rose-600 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Thêm bài hát</span>
@@ -174,6 +226,15 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
                     <span>Nghe trên Spotify / YouTube</span>
                   </a>
                 )}
+                {isEditMode && onUpdateSong && (
+                  <button
+                    onClick={() => openEditModal(ourSong)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-colors"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Sửa bài hát này</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -229,32 +290,44 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
                 </a>
               )}
               {isEditMode && (
-                <button
-                  onClick={() => onDeleteSong(song.id)}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                  title="Xóa bài hát"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <>
+                  <button
+                    onClick={() => openEditModal(song)}
+                    className="p-2 rounded-xl text-zinc-400 hover:text-pink-500 hover:bg-pink-50 transition-colors"
+                    title="Chỉnh sửa bài hát"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => onDeleteSong(song.id)}
+                    className="p-2 rounded-xl text-zinc-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                    title="Xóa bài hát"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </>
               )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Add Song Modal */}
+      {/* Add / Edit Song Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-pink-200 dark:border-zinc-800 shadow-2xl">
             <button
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setEditingSong(null);
+              }}
               className="absolute top-4 right-4 p-2 rounded-full hover:bg-pink-50 text-zinc-500"
             >
               <X className="w-5 h-5" />
             </button>
 
             <h3 className="font-romantic text-3xl text-rose-600 dark:text-rose-400 font-bold mb-4">
-              Thêm bài hát mới 🎵
+              {editingSong ? 'Chỉnh sửa bài hát 🎵' : 'Thêm bài hát mới 🎵'}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-3.5 text-sm">
@@ -300,15 +373,48 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-300 mb-1">
-                  Link ảnh bìa (Cover)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                    Ảnh bìa bài hát (Cover)
+                  </label>
+                  <label className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-semibold cursor-pointer shadow-sm hover:opacity-90 active:scale-95 transition-all ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    <span>{isUploading ? 'Đang tải ảnh...' : 'Tải ảnh từ điện thoại'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploading}
+                      onChange={handleImageFile}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {cover && (
+                  <div className="relative mb-2 w-full h-36 rounded-xl overflow-hidden border border-pink-200 dark:border-zinc-700 bg-pink-50/50 dark:bg-zinc-800/60 group">
+                    <img
+                      src={cover}
+                      alt="Cover preview"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCover('')}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-rose-500 transition-colors shadow-sm"
+                      title="Xóa ảnh này"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 <input
                   type="text"
                   value={cover}
                   onChange={(e) => setCover(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 rounded-xl bg-pink-50/50 dark:bg-zinc-800/60 border border-pink-200 dark:border-zinc-700 text-xs"
+                  placeholder="Hoặc dán link ảnh https://... (tùy chọn)"
+                  className="w-full px-3 py-2 rounded-xl bg-pink-50/50 dark:bg-zinc-800/60 border border-pink-200 dark:border-zinc-700 text-xs text-zinc-600 dark:text-zinc-300"
                 />
               </div>
 
@@ -341,16 +447,19 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setEditingSong(null);
+                  }}
                   className="px-4 py-1.5 rounded-full text-xs text-zinc-600"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-rose-500 text-white text-xs font-bold shadow-sm"
+                  className="px-5 py-2 rounded-full bg-rose-500 text-white text-xs font-bold shadow-sm hover:bg-rose-600 transition-colors"
                 >
-                  Thêm vào playlist
+                  {editingSong ? 'Lưu thay đổi' : 'Thêm vào playlist'}
                 </button>
               </div>
             </form>
