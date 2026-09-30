@@ -62,7 +62,7 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
         const uploadedUrl = await uploadImage(file);
         setCover(uploadedUrl);
       } catch (err) {
-        console.error('Failed to upload song cover', err);
+        alert((err as Error).message);
       } finally {
         setIsUploading(false);
       }

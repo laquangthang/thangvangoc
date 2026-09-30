@@ -127,7 +127,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         const url = await uploadImage(file);
         setImage(url);
       } catch (err) {
-        console.error('Failed to process image', err);
+        alert((err as Error).message);
       } finally {
         setIsUploading(false);
       }

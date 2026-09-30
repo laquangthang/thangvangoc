@@ -59,7 +59,7 @@ export const GiftsSection: React.FC<GiftsSectionProps> = ({
         const url = await uploadImage(file);
         setPhotosInput(url);
       } catch (err) {
-        console.error('Failed to upload gift image', err);
+        alert((err as Error).message);
       } finally {
         setIsUploading(false);
       }

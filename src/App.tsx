@@ -68,6 +68,7 @@ export default function App() {
   // before the first snapshot count as local changes and survive the merge.
   const lastSyncedRef = React.useRef<LoveStoryData>(data);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('connecting');
+  const [saveError, setSaveError] = useState(false);
 
   // Subscribe to Cloud Firestore real-time updates (sync across devices in background)
   useEffect(() => {
@@ -103,10 +104,12 @@ export default function App() {
       if (Object.keys(changed).length === 0) return;
       try {
         await saveLoveStoryToFirestore(changed);
+        setSaveError(false);
         // If a snapshot replaced base meanwhile, it is already the newer server copy
         if (lastSyncedRef.current === base) lastSyncedRef.current = { ...base, ...changed };
       } catch (err) {
         console.error('Failed to push update to Firestore', err);
+        setSaveError(true);
       }
     }, 600);
 
@@ -586,9 +589,11 @@ export default function App() {
       </main>
 
       {/* Sync status: shown only while loading or on error */}
-      {(syncStatus === 'connecting' || syncStatus === 'error') && (
+      {(syncStatus === 'connecting' || syncStatus === 'error' || saveError) && (
         <div role="status" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold shadow-lg bg-white/95 dark:bg-zinc-900/95 border border-pink-200 dark:border-zinc-700 text-rose-600 dark:text-rose-300">
-          {syncStatus === 'connecting'
+          {saveError
+            ? 'Chưa lưu được lên server – thay đổi mới chỉ nằm trên máy này'
+            : syncStatus === 'connecting'
             ? 'Đang tải dữ liệu từ server… (chưa thể chỉnh sửa)'
             : hasLoadedRemoteRef.current
               ? 'Mất kết nối server – thay đổi có thể chưa được đồng bộ'

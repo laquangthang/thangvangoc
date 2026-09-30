@@ -161,15 +161,16 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
   const handleMultipleImageFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      try {
-        setIsUploading(true);
-        const uploadPromises = Array.from(files).map((file: File) => uploadImage(file));
-        const urls = await Promise.all(uploadPromises);
+      setIsUploading(true);
+      const results = await Promise.allSettled(Array.from(files).map((file: File) => uploadImage(file)));
+      setIsUploading(false);
+      const urls = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+      const failed = results.flatMap((r) => (r.status === 'rejected' ? [(r.reason as Error).message] : []));
+      if (urls.length) {
         setPhotosInput((prev) => (prev ? `${prev}\n${urls.join('\n')}` : urls.join('\n')));
-      } catch (err) {
-        console.error('Failed to upload some images', err);
-      } finally {
-        setIsUploading(false);
+      }
+      if (failed.length) {
+        alert(`${failed.length}/${results.length} ảnh tải lên thất bại:\n${failed.join('\n')}`);
       }
     }
   };
