@@ -18,6 +18,8 @@ import { soundFx } from './utils/soundEffects';
 import {
   subscribeLoveStory,
   saveLoveStoryToFirestore,
+  changedFields,
+  mergeRemote,
   SyncStatus,
 } from './utils/firebaseSync';
 
@@ -60,22 +62,22 @@ export default function App() {
     return initialLoveStoryData;
   });
 
-  // Ref to track if state update originated from Firestore snapshot
-  const isRemoteUpdateRef = React.useRef(false);
   // No autosave until the server's copy has arrived, otherwise a stale local copy overwrites real data
   const hasLoadedRemoteRef = React.useRef(false);
-  // Latest data known to be on the server
-  const lastSyncedRef = React.useRef<LoveStoryData | null>(null);
+  // Latest data known to be on the server. Starts as the data we opened with, so edits made
+  // before the first snapshot count as local changes and survive the merge.
+  const lastSyncedRef = React.useRef<LoveStoryData>(data);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('connecting');
 
   // Subscribe to Cloud Firestore real-time updates (sync across devices in background)
   useEffect(() => {
     const unsubscribe = subscribeLoveStory(
       (remoteData) => {
-        hasLoadedRemoteRef.current = true;
+        const base = lastSyncedRef.current;
         lastSyncedRef.current = remoteData;
-        isRemoteUpdateRef.current = true;
-        setData(remoteData);
+        hasLoadedRemoteRef.current = true;
+        // Keep keys edited locally (still waiting to be saved), take the rest from the server
+        setData((prev) => mergeRemote(prev, base, remoteData));
       },
       setSyncStatus
     );
@@ -93,16 +95,16 @@ export default function App() {
 
     if (!hasLoadedRemoteRef.current) return;
 
-    // If change originated from remote Firestore, do not re-push
-    if (isRemoteUpdateRef.current) {
-      isRemoteUpdateRef.current = false;
-      return;
-    }
-
-    // Debounced save to Firestore
+    // Debounced save to Firestore: only top-level keys that differ from the server copy.
+    // Cancelling this timer is safe: the next run diffs again, so pending edits are never dropped.
     const timer = setTimeout(async () => {
+      const base = lastSyncedRef.current;
+      const changed = changedFields(data, base);
+      if (Object.keys(changed).length === 0) return;
       try {
-        await saveLoveStoryToFirestore(data);
+        await saveLoveStoryToFirestore(changed);
+        // If a snapshot replaced base meanwhile, it is already the newer server copy
+        if (lastSyncedRef.current === base) lastSyncedRef.current = { ...base, ...changed };
       } catch (err) {
         console.error('Failed to push update to Firestore', err);
       }

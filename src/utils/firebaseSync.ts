@@ -8,6 +8,23 @@ const DOC_ID = 'thang_ngoc_main';
 
 export type SyncStatus = 'connecting' | 'synced' | 'saving' | 'error';
 
+/** Top-level keys of `local` whose value differs from `base` (deep compare via JSON). */
+export function changedFields(local: LoveStoryData, base: LoveStoryData): Partial<LoveStoryData> {
+  return Object.fromEntries(
+    Object.entries(local).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(base[k as keyof LoveStoryData]))
+  ) as Partial<LoveStoryData>;
+}
+
+/**
+ * Take `remote`, but keep top-level keys edited locally since `base` (last server copy).
+ * ponytail: conflict resolution is per top-level key; if both partners edit the same key
+ * (e.g. both add a memory) before syncing, local wins and the other edit is overwritten.
+ * Upgrade path: one document per item (sub-collections).
+ */
+export function mergeRemote(local: LoveStoryData, base: LoveStoryData, remote: LoveStoryData): LoveStoryData {
+  return { ...remote, ...changedFields(local, base) };
+}
+
 /**
  * Listen for real-time changes to the love story from Firestore.
  * When data is changed by either partner, the callback is invoked with latest data.
@@ -25,7 +42,9 @@ export function subscribeLoveStory(
     docRef,
     { includeMetadataChanges: true },
     async (snapshot) => {
-      const { fromCache } = snapshot.metadata;
+      const { fromCache, hasPendingWrites } = snapshot.metadata;
+      // Echo of our own not-yet-acknowledged write, not new data from the other device
+      if (hasPendingWrites) return;
       if (snapshot.exists()) {
         const firestoreData = snapshot.data() as Partial<LoveStoryData>;
         // Merge with initial structure to guarantee any missing fields exist
@@ -73,12 +92,14 @@ export function subscribeLoveStory(
 }
 
 /**
- * Save updated love story data to Cloud Firestore.
+ * Save only the changed top-level fields to Cloud Firestore.
+ * mergeFields (not merge: true) so each listed field is replaced whole, like the old full setDoc,
+ * instead of being deep-merged with stale nested values.
  */
-export async function saveLoveStoryToFirestore(data: LoveStoryData): Promise<void> {
+export async function saveLoveStoryToFirestore(fields: Partial<LoveStoryData>): Promise<void> {
   try {
     const docRef = doc(db, COLLECTION_NAME, DOC_ID);
-    await setDoc(docRef, data);
+    await setDoc(docRef, fields, { mergeFields: Object.keys(fields) });
   } catch (error) {
     console.error('Error saving to Firestore:', error);
     throw error;
