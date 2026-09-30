@@ -14,7 +14,7 @@ import {
   Edit3,
   Loader2,
 } from 'lucide-react';
-import { uploadImage } from '../utils/cloudinary';
+import { uploadImage, optimizeImage } from '../utils/cloudinary';
 
 interface GiftsSectionProps {
   gifts: Gift[];
@@ -245,7 +245,9 @@ export const GiftsSection: React.FC<GiftsSectionProps> = ({
               {gift.photos[0] && (
                 <div className="relative aspect-[16/11] rounded-2xl overflow-hidden bg-pink-100 mb-4">
                   <img
-                    src={gift.photos[0]}
+                    src={optimizeImage(gift.photos[0], 600)}
+                    loading="lazy"
+                    decoding="async"
                     alt={gift.name}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
@@ -453,7 +455,7 @@ export const GiftsSection: React.FC<GiftsSectionProps> = ({
                 {photosInput && (
                   <div className="relative mb-2 w-full h-40 rounded-xl overflow-hidden border border-pink-200 dark:border-zinc-700 bg-pink-50/50 dark:bg-zinc-800/60 group">
                     <img
-                      src={photosInput.split('\n')[0]}
+                      src={optimizeImage(photosInput.split('\n')[0], 600)}
                       alt="Ảnh món quà"
                       className="w-full h-full object-cover"
                     />

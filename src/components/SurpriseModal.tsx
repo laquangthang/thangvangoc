@@ -4,6 +4,7 @@ import { soundFx } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
 import { Sticker } from './Sticker';
 import { Sparkles, Calendar, MapPin, X, Heart } from 'lucide-react';
+import { optimizeImage } from '../utils/cloudinary';
 
 interface SurpriseModalProps {
   memory: Memory;
@@ -58,7 +59,7 @@ export const SurpriseModal: React.FC<SurpriseModalProps> = ({
         {memory.photos[0] && (
           <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-pink-100 mb-4 border border-pink-200">
             <img
-              src={memory.photos[0]}
+              src={optimizeImage(memory.photos[0], 1600)}
               alt={memory.title}
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover"

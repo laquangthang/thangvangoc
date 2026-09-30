@@ -38,3 +38,15 @@ export async function uploadImage(file: File): Promise<string> {
   }
   return data.secure_url;
 }
+
+/**
+ * Resized/compressed variant of a Cloudinary upload URL (auto format + quality, max `width`px,
+ * c_limit = never upscale). Only rewrites .../image/upload/v123/... URLs, i.e. untouched uploads;
+ * URLs that already carry a transformation, other hosts and legacy base64 data URLs are returned as is.
+ */
+export function optimizeImage<T extends string | undefined>(url: T, width: number): T {
+  return url?.replace(
+    /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(v\d+\/)/,
+    `$1f_auto,q_auto,c_limit,w_${width}/$2`
+  ) as T;
+}

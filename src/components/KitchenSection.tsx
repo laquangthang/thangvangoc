@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { optimizeImage } from '../utils/cloudinary';
 import { Recipe } from '../types';
 import { soundFx } from '../utils/soundEffects';
 import { Sticker } from './Sticker';
@@ -200,7 +201,9 @@ export const KitchenSection: React.FC<KitchenSectionProps> = ({
               {/* Food Image */}
               <div className="relative aspect-[16/11] rounded-2xl overflow-hidden bg-orange-50 mb-4">
                 <img
-                  src={recipe.photos[0]}
+                  src={optimizeImage(recipe.photos[0], 600)}
+                  loading="lazy"
+                  decoding="async"
                   alt={recipe.name}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
@@ -267,7 +270,7 @@ export const KitchenSection: React.FC<KitchenSectionProps> = ({
             {/* Recipe photo banner */}
             <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-orange-50 mb-4">
               <img
-                src={selectedRecipe.photos[0]}
+                src={optimizeImage(selectedRecipe.photos[0], 1600)}
                 alt={selectedRecipe.name}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"

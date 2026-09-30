@@ -1,4 +1,5 @@
 import React from 'react';
+import { optimizeImage } from '../utils/cloudinary';
 import {
   CoupleProfile,
   Memory,
@@ -146,7 +147,7 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
               <div className="polaroid-card bg-white dark:bg-zinc-900 p-3 pb-5 rounded-2xl border border-pink-100 dark:border-zinc-800 max-w-[280px] sm:max-w-[310px] transform -rotate-1 transition-all group-hover:rotate-0">
                 <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-pink-100">
                   <img
-                    src={profile.couplePhoto}
+                    src={optimizeImage(profile.couplePhoto, 600)}
                     alt={`${profile.partner1.name} & ${profile.partner2.name}`}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -323,7 +324,9 @@ export const HomeHero: React.FC<HomeHeroProps> = ({
             >
               {thisDayMemory.photos[0] && (
                 <img
-                  src={thisDayMemory.photos[0]}
+                  src={optimizeImage(thisDayMemory.photos[0], 600)}
+                  loading="lazy"
+                  decoding="async"
                   alt={thisDayMemory.title}
                   referrerPolicy="no-referrer"
                   className="w-20 h-20 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"

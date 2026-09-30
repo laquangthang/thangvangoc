@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { optimizeImage } from '../utils/cloudinary';
 import { CoupleProfile, PartnerProfile } from '../types';
 import { soundFx } from '../utils/soundEffects';
 import { Sticker } from './Sticker';
@@ -134,7 +135,7 @@ export const CoupleProfilesModal: React.FC<CoupleProfilesModalProps> = ({
               }`}
             >
               <img
-                src={p1.avatar}
+                src={optimizeImage(p1.avatar, 600)}
                 alt={p1.name}
                 referrerPolicy="no-referrer"
                 className="w-5 h-5 rounded-full object-cover"
@@ -150,7 +151,7 @@ export const CoupleProfilesModal: React.FC<CoupleProfilesModalProps> = ({
               }`}
             >
               <img
-                src={p2.avatar}
+                src={optimizeImage(p2.avatar, 600)}
                 alt={p2.name}
                 referrerPolicy="no-referrer"
                 className="w-5 h-5 rounded-full object-cover"
@@ -166,7 +167,7 @@ export const CoupleProfilesModal: React.FC<CoupleProfilesModalProps> = ({
             <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-3xl bg-pink-50/50 dark:bg-zinc-800/40 border border-pink-100 dark:border-zinc-800 mb-6">
               <div className="relative shrink-0">
                 <img
-                  src={current.avatar}
+                  src={optimizeImage(current.avatar, 600)}
                   alt={current.name}
                   referrerPolicy="no-referrer"
                   className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover shadow-md border-4 border-white dark:border-zinc-700"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { optimizeImage } from '../utils/cloudinary';
 import { BucketItem } from '../types';
 import { soundFx } from '../utils/soundEffects';
 import confetti from 'canvas-confetti';
@@ -234,7 +235,9 @@ export const BucketListSection: React.FC<BucketListSectionProps> = ({
               {item.image && item.completed && (
                 <div className="relative aspect-[16/9] max-w-[220px] rounded-xl overflow-hidden mt-2 border border-emerald-200">
                   <img
-                    src={item.image}
+                    src={optimizeImage(item.image, 600)}
+                    loading="lazy"
+                    decoding="async"
                     alt={item.title}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"

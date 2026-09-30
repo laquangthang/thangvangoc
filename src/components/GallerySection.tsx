@@ -19,7 +19,7 @@ import {
   BookOpen,
   Loader2,
 } from 'lucide-react';
-import { uploadImage } from '../utils/cloudinary';
+import { uploadImage, optimizeImage } from '../utils/cloudinary';
 
 interface GallerySectionProps {
   memories: Memory[];
@@ -284,7 +284,9 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
                 {/* Primary Photo */}
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-pink-100 mb-3">
                   <img
-                    src={memory.photos[0]}
+                    src={optimizeImage(memory.photos[0], 600)}
+                    loading="lazy"
+                    decoding="async"
                     alt={memory.title}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -383,7 +385,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
             {/* Polaroid Photo Slider */}
             <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-2xl overflow-hidden bg-black mb-4">
               <img
-                src={lightboxMemory.photos[lightboxPhotoIdx]}
+                src={optimizeImage(lightboxMemory.photos[lightboxPhotoIdx], 1600)}
                 alt={lightboxMemory.title}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-contain"

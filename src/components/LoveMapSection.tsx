@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { optimizeImage } from '../utils/cloudinary';
 import { LoveLocation } from '../types';
 import { soundFx } from '../utils/soundEffects';
 import { Sticker } from './Sticker';
@@ -205,7 +206,7 @@ export const LoveMapSection: React.FC<LoveMapSectionProps> = ({
               {selectedLocation.photos[0] && (
                 <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-pink-100 mb-4">
                   <img
-                    src={selectedLocation.photos[0]}
+                    src={optimizeImage(selectedLocation.photos[0], 600)}
                     alt={selectedLocation.placeName}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"

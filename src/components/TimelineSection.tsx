@@ -15,7 +15,7 @@ import {
   Smile,
   Loader2,
 } from 'lucide-react';
-import { uploadImage } from '../utils/cloudinary';
+import { uploadImage, optimizeImage } from '../utils/cloudinary';
 
 interface TimelineSectionProps {
   events: TimelineEvent[];
@@ -231,7 +231,9 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                     {event.image && (
                       <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-4 bg-pink-100">
                         <img
-                          src={event.image}
+                          src={optimizeImage(event.image, 600)}
+                          loading="lazy"
+                          decoding="async"
                           alt={event.title}
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
@@ -419,7 +421,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                 </div>
                 {image && (
                   <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-pink-200">
-                    <img src={image} alt="Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                    <img src={optimizeImage(image, 600)} alt="Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>

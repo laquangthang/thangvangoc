@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Song } from '../types';
 import { soundFx } from '../utils/soundEffects';
 import { Sticker } from './Sticker';
-import { uploadImage } from '../utils/cloudinary';
+import { uploadImage, optimizeImage } from '../utils/cloudinary';
 import {
   Music,
   Heart,
@@ -178,7 +178,7 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border border-zinc-800 flex items-center justify-center">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border border-zinc-700 flex items-center justify-center">
                     <img
-                      src={ourSong.cover}
+                      src={optimizeImage(ourSong.cover, 600)}
                       alt={ourSong.title}
                       referrerPolicy="no-referrer"
                       className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-rose-400"
@@ -250,7 +250,9 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
           >
             <div className="flex items-center gap-3 min-w-0">
               <img
-                src={song.cover}
+                src={optimizeImage(song.cover, 600)}
+                loading="lazy"
+                decoding="async"
                 alt={song.title}
                 referrerPolicy="no-referrer"
                 className="w-12 h-12 rounded-xl object-cover shrink-0"
@@ -393,7 +395,7 @@ export const SoundtrackSection: React.FC<SoundtrackSectionProps> = ({
                 {cover && (
                   <div className="relative mb-2 w-full h-36 rounded-xl overflow-hidden border border-pink-200 dark:border-zinc-700 bg-pink-50/50 dark:bg-zinc-800/60 group">
                     <img
-                      src={cover}
+                      src={optimizeImage(cover, 600)}
                       alt="Cover preview"
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover"
