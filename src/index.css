@@ -76,3 +76,16 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(244, 114, 182, 0.6);
 }
+
+/* Phones: decorative infinite animations run a few times then stop (keeps the GPU idle, phone cool).
+   Reduced motion: none at all. Loading/playing spinners (animate-spin) are left alone. */
+@media (max-width: 767px) {
+  .animate-float-slow, .animate-pulse-glow, .animate-ping, .animate-pulse, .animate-bounce {
+    animation-iteration-count: 3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow, .animate-pulse-glow, .animate-ping, .animate-pulse, .animate-bounce {
+    animation: none;
+  }
+}

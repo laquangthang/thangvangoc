@@ -451,7 +451,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#fff9f9] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans selection:bg-rose-200 selection:text-rose-900">
       {/* Ambient background romantic gradients */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-40 dark:opacity-20">
+      <div className="hidden md:block fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-40 dark:opacity-20">
         <div className="absolute top-10 left-10 w-96 h-96 rounded-full bg-pink-300/40 blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-rose-200/40 blur-3xl" />
         <div className="absolute top-1/2 left-1/3 w-80 h-80 rounded-full bg-amber-100/40 blur-3xl" />
