@@ -18,6 +18,7 @@ import { soundFx } from './utils/soundEffects';
 import {
   subscribeLoveStory,
   saveLoveStoryToFirestore,
+  SyncStatus,
 } from './utils/firebaseSync';
 
 // Components
@@ -61,14 +62,22 @@ export default function App() {
 
   // Ref to track if state update originated from Firestore snapshot
   const isRemoteUpdateRef = React.useRef(false);
+  // No autosave until the server's copy has arrived, otherwise a stale local copy overwrites real data
+  const hasLoadedRemoteRef = React.useRef(false);
+  // Latest data known to be on the server
+  const lastSyncedRef = React.useRef<LoveStoryData | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('connecting');
 
   // Subscribe to Cloud Firestore real-time updates (sync across devices in background)
   useEffect(() => {
     const unsubscribe = subscribeLoveStory(
       (remoteData) => {
+        hasLoadedRemoteRef.current = true;
+        lastSyncedRef.current = remoteData;
         isRemoteUpdateRef.current = true;
         setData(remoteData);
-      }
+      },
+      setSyncStatus
     );
 
     return () => unsubscribe();
@@ -81,6 +90,8 @@ export default function App() {
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
+
+    if (!hasLoadedRemoteRef.current) return;
 
     // If change originated from remote Firestore, do not re-push
     if (isRemoteUpdateRef.current) {
@@ -451,7 +462,7 @@ export default function App() {
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         isEditMode={isEditMode}
-        onToggleEditMode={() => setIsEditMode(!isEditMode)}
+        onToggleEditMode={() => hasLoadedRemoteRef.current && setIsEditMode(!isEditMode)}
         onOpenSurprise={handleOpenSurprise}
         onOpenProfiles={() => setIsProfilesOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -571,6 +582,17 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Sync status: shown only while loading or on error */}
+      {(syncStatus === 'connecting' || syncStatus === 'error') && (
+        <div role="status" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-xs font-semibold shadow-lg bg-white/95 dark:bg-zinc-900/95 border border-pink-200 dark:border-zinc-700 text-rose-600 dark:text-rose-300">
+          {syncStatus === 'connecting'
+            ? 'Đang tải dữ liệu từ server… (chưa thể chỉnh sửa)'
+            : hasLoadedRemoteRef.current
+              ? 'Mất kết nối server – thay đổi có thể chưa được đồng bộ'
+              : 'Không tải được dữ liệu từ server – chưa thể chỉnh sửa'}
+        </div>
+      )}
 
       {/* Secret Mascot Bear in corner for romantic easter egg */}
       <SecretMascotButton message={data.secretMessage} />

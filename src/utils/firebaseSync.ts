@@ -20,9 +20,12 @@ export function subscribeLoveStory(
 
   if (onStatusChange) onStatusChange('connecting');
 
+  // includeMetadataChanges: also get the event when a cached snapshot is confirmed by the server
   const unsubscribe = onSnapshot(
     docRef,
+    { includeMetadataChanges: true },
     async (snapshot) => {
+      const { fromCache } = snapshot.metadata;
       if (snapshot.exists()) {
         const firestoreData = snapshot.data() as Partial<LoveStoryData>;
         // Merge with initial structure to guarantee any missing fields exist
@@ -45,6 +48,8 @@ export function subscribeLoveStory(
         onData(mergedData);
         if (onStatusChange) onStatusChange('synced');
       } else {
+        // "Not found" from local cache (offline / not yet reached server) is not trustworthy: never seed on it
+        if (fromCache) return;
         // Document does not exist yet in Firestore, seed it with current local or initial data
         console.log('Firebase document not found, initializing...');
         try {
